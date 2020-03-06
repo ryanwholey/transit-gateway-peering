@@ -2,6 +2,20 @@ locals {
   base_cidr_block = "10.0.0.0/8"
 }
 
+# ### AWS ACCOUNT ORG PREP ###
+
+resource "aws_organizations_organization" "org" {
+  aws_service_access_principals = [
+    "ram.amazonaws.com",
+  ]
+
+  feature_set = "ALL"
+}
+
+resource "aws_iam_service_linked_role" "ram" {
+  aws_service_name = "ram.amazonaws.com"
+}
+
 ### NETWORK | INSTANCES ###
 
 module "subnet_addrs" {
@@ -41,22 +55,22 @@ module playground {
   allowed_cidrs = values(module.subnet_addrs.network_cidr_blocks)
 }
 
-### PEERING ###
+# ### PEERING ###
 
-module main_playground_peering {
-  source = "./modules/peering"
+# module main_playground_peering {
+#   source = "./modules/peering"
 
-  providers = {
-    aws.requester = aws.main
-    aws.accepter  = aws.playground
-  }
+#   providers = {
+#     aws.requester = aws.main
+#     aws.accepter  = aws.playground
+#   }
 
-  requester_vpc_id = module.main.vpc_id
-  accepter_vpc_id  = module.playground.vpc_id
+#   requester_vpc_id = module.main.vpc_id
+#   accepter_vpc_id  = module.playground.vpc_id
 
-  requester_route_table_ids = [for table in module.main.route_tables : table.id]
-  accepter_route_table_ids  = [for table in module.playground.route_tables : table.id]
-}
+#   requester_route_table_ids = [for table in module.main.route_tables : table.id]
+#   accepter_route_table_ids  = [for table in module.playground.route_tables : table.id]
+# }
 
 ### TRANSIT GATEWAY ### 
 
